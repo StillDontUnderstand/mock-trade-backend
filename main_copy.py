@@ -42,6 +42,7 @@ class UserInDB(User):
 class Token(BaseModel):
     access_token: str
     token_type: str
+    user_name:str
 
 
 class TokenData(BaseModel):
@@ -50,7 +51,7 @@ class TokenData(BaseModel):
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 app = FastAPI()
 
 
@@ -114,7 +115,7 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     return current_user
 
 
-@app.post("/token", response_model=Token)
+@app.post("/login", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate_user(fake_users_db, form_data.username, form_data.password)
     if not user:
@@ -127,10 +128,10 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "token_type": "bearer", "user_name": user.username}
 
 
-@app.get("/users/me")
+@app.get("/users")
 async def read_users_me(current_user: User = Depends(get_current_active_user)):
     return current_user
 
@@ -141,4 +142,5 @@ async def read_own_items(current_user: User = Depends(get_current_active_user)):
 
 
 if __name__ == '__main__':
+    # uvicorn.run(app, host="192.168.146.239", port=8000)
     uvicorn.run(app, host="127.0.0.1", port=8000)
