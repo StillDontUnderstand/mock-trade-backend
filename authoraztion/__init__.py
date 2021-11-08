@@ -1,15 +1,22 @@
-from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import Optional
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
-import uvicorn
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import APIRouter
+
+
+router = APIRouter(
+    prefix="/login",
+)
 
 SECRET_KEY = "edf84c59b1c173534a1dd51d320cc13580879560cf66b877ae983290aef087dd"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+
 fake_users_db = {
     "johndoe": {
         "username": "johndoe",
@@ -42,7 +49,7 @@ class UserInDB(User):
 class Token(BaseModel):
     access_token: str
     token_type: str
-    user_name:str
+    user_name: str
 
 
 class TokenData(BaseModel):
@@ -50,9 +57,7 @@ class TokenData(BaseModel):
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-app = FastAPI()
 
 
 def verify_password(plain_password, hashed_password):
@@ -115,9 +120,10 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     return current_user
 
 
-@app.post("/login", response_model=Token)
+@router.post("", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(fake_users_db, form_data.username, form_data.password)
+    user = authenticate_user(
+        fake_users_db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -131,16 +137,3 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"access_token": access_token, "token_type": "bearer", "user_name": user.username}
 
 
-@app.get("/users")
-async def read_users_me(current_user: User = Depends(get_current_active_user)):
-    return current_user
-
-
-@app.get("/users/me/items/")
-async def read_own_items(current_user: User = Depends(get_current_active_user)):
-    return [{"item_id": "Foo", "owner": current_user.username}]
-
-
-if __name__ == '__main__':
-    # uvicorn.run(app, host="192.168.146.239", port=8000)
-    uvicorn.run(app, host="127.0.0.1", port=8000)
