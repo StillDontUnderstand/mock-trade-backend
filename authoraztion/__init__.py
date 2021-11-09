@@ -7,7 +7,6 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi import APIRouter
 
-
 router = APIRouter(
     prefix="/login",
 )
@@ -15,7 +14,6 @@ router = APIRouter(
 SECRET_KEY = "edf84c59b1c173534a1dd51d320cc13580879560cf66b877ae983290aef087dd"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
 
 fake_users_db = {
     "johndoe": {
@@ -25,12 +23,12 @@ fake_users_db = {
         "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
         "disabled": False,
     },
-    "alice": {
-        "username": "alice",
-        "full_name": "Alice Wonderson",
-        "email": "alice@example.com",
-        "hashed_password": "fakehashedsecret2",
-        "disabled": True,
+    "admin": {
+        "username": "admin",
+        "full_name": "Administrator",
+        "email": "admin@example.com",
+        "hashed_password": "$2b$12$einMnqAzWqh8WQRZkbZPXOiru7b03EcHBtG6lDhqzFfyiWL3qVG5m",
+        "disabled": False,
     },
 }
 
@@ -137,3 +135,18 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"access_token": access_token, "token_type": "bearer", "user_name": user.username}
 
 
+if __name__ == "__main__":
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    pwd_context1 = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+    hash_res = pwd_context.hash("secret")
+    hash_res1 = pwd_context1.hash("admin")
+
+    print(hash_res)
+    print(hash_res1)
+
+    check_res = pwd_context1.verify('secret', hash_res)
+    check_res1 = pwd_context1.verify('secret', hash_res1)
+
+    print(check_res)
+    print(check_res1)
